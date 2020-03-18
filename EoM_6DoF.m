@@ -3,11 +3,12 @@ function x_dot = EoM_6DoF(x, u)
 % - CO: Center of Orientation. Origin datum for the sub. (origin of
 % base_link)
 % - CoG: Center of Gravity. Defined w.r.t CO
+% - CoB: Center of Buoyancy. Defined w.r.t CO
 % - Moments of inertia: Inertia moments of the dry vehicle about the CoG.
 % 
 % 
 % State variables:
-% - x = [n, v]. Full state.
+% - x = [n, v]. Full state in NED.
 % - u: wrench input about CO
 % - v1: Linear velocities in body frame
 % - v2: Angular velicities in body frame
@@ -36,7 +37,9 @@ function x_dot = EoM_6DoF(x, u)
 %%%%%%%%%%%%%%%%%%
 
 m = 10; % Vehicle Mass in air
+b = 10; % Vehicle Buoyancy (Mass of displaced water)
 r_G = [0;0;0]; % CoG location relative to CO
+r_B = [0;0;0]; % CoB location relative to CO
 
 % Moments of inertia about CoG:
 Ixx = 1;
@@ -90,8 +93,7 @@ C_rb = buildCoriolisMatrix(m, r_G, I, v1, v2);
 D_lin = -diag([D_x, D_y, D_z, D_yaw, D_pitch, D_roll]);
 D_quad = -diag([D2_x, D2_y, D2_z, D2_yaw, D2_pitch, D2_roll]) * abs(v);
 [M_added, C_added] = buildAddedMassCoriolisMatrices(v, Ma_x, Ma_y, Ma_z, Ma_yaw, Ma_pitch, Ma_roll);
-% TODO: Gravity matrix
-G = zeros(6,1);
+G = buildGravityMatrix(m, b, r_G, r_B, n2);
 
 % Property 4.1: (Chin 2013, p 139)
 M = M_rb + M_added;
@@ -110,7 +112,6 @@ g_u = [zeros(6,1); M_inv*u];
 x_dot = f_x + g_u;
 
 end
-
 
 function [J, J1, J2] = buildEulerMatrix(n2)
     % Note: Due to the use of euler angle representation, J becomes
@@ -132,14 +133,16 @@ function [J, J1, J2] = buildEulerMatrix(n2)
     eps = 0.001;
     cth = max(abs(cth), eps)*sign(cth);
     
-    % J1 = eul2rotm([phi,theta,psi], 'yxz')';
+    % Eq 4.17 (Chin 2013, p 136)
     J1 = [cpsi*cth, -spsi*cphi + cpsi*sth*sphi, spsi*sphi + cpsi*cphi*sth;
         spsi*cth, cpsi*cphi + sphi*sth*spsi, -cpsi*sphi + sth*spsi*cth;
         -sth, cth*sphi, cth*cphi];
+    % J1 = eul2rotm([phi,theta,psi], 'yxz')';
     
-    J2 = [1, spsi*tth, cpsi*tth;
-        0, spsi, -spsi;
-        0, spsi/cth, cpsi/cth];
+    % NOTE: There is an error in Chin 2013. J2(2,2) = cphi, not sphi!
+    J2 = [1, sphi*tth, cphi*tth;
+        0, cphi, -sphi;
+        0, sphi/cth, cphi/cth];
     
     J = [J1, zeros(3); zeros(3), J2];
 end
@@ -176,6 +179,34 @@ function [M_added, C_added] = buildAddedMassCoriolisMatrices(v, Ma_x, Ma_y, Ma_z
          0, -Ma_z * v(3), Ma_y * v(2), 0, -Ma_roll * v(6), Ma_pitch * v(5);
          Ma_z * v(3), 0, -Ma_x * v(1), Ma_roll * v(6), 0, -Ma_yaw * v(4);
          -Ma_y * v(2), Ma_x * v(1), 0, -Ma_pitch * v(5), Ma_yaw * v(4), 0];
+end
+
+function G = buildGravityMatrix(m, b, r_G, r_B, n2)
+    g = 9.81;
+    W = m*g;
+    B = b*g;
+    
+    phi = n2(1);
+    theta = n2(2);
+    cph = cos(phi);
+    sph = sin(phi);
+    cth = cos(theta);
+    sth = sin(theta);
+    
+    x_G = r_G(1);
+    y_G = r_G(2);
+    z_G = r_G(3);
+    x_B = r_B(1);
+    y_B = r_B(2);
+    z_B = r_B(3);
+    
+    % Eq 4.54 (Chin 2013, p 180)
+    G = [(W-B) * sth;
+         -(W-B) * cth*sph;
+         -(W-B) * cth*cph;
+         -(y_G*W - y_B*B)*cth*cph + (z_G*W - z_B*B)*cth*sph;
+         (z_G*W - z_B*B)*sth + (x_G*W - x_B*B)*cth*cph;
+         -(x_G*W - x_B*B)*cth*sph - (y_G *W - y_B*B)*sth;];
 end
 
 function S = skew(x)
