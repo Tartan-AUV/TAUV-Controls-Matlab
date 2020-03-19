@@ -10,13 +10,14 @@ function x_dot = EoM_6DoF(x, u)
 % State variables:
 % - x = [n, v]. Full state in NED.
 % - u: wrench input about CO
-% - v1: Linear velocities in body frame
-% - v2: Angular velicities in body frame
+% - v1: Linear velocities in body frame about [x,y,z]
+% - v2: Angular velicities in body frame about [x,y,z]
 % - v = [v1; v2]
 % 
 % - n1 = [x,y,z] position defined in NED (north, east, down)
 % - n2 = [phi, theta, psi] orientation defined  in NED as successively
-% applied euler angles about Z, Y, X axes respectively. ('ZYX' Euler angles)
+% applied euler angles about x, y, z axes respectively. (Roll, Pitch, Yaw)
+% ('xyz' explicit euler angles, or 'ZYX' implicit euler angles: [psi, theta, phi].)
 % - n = [n1; n2]
 % 
 %
@@ -37,25 +38,25 @@ function x_dot = EoM_6DoF(x, u)
 %%%%%%%%%%%%%%%%%%
 
 m = 10; % Vehicle Mass in air
-b = 10; % Vehicle Buoyancy (Mass of displaced water)
-r_G = [0;0;0]; % CoG location relative to CO
-r_B = [0;0;0]; % CoB location relative to CO
+b = 10.2; % Vehicle Buoyancy (Mass of displaced water)
+r_G = [0;0;0]; % CoG location relative to CO (NED)
+r_B = [0;0;-0.1]; % CoB location relative to CO (NED)
 
 % Moments of inertia about CoG:
-Ixx = 1;
-Iyy = 1;
-Izz = 1;
+Ixx = 10;
+Iyy = 10;
+Izz = 10;
 Ixy = 0;
 Ixz = 0;
 Iyz = 0;
 
 % Linear damping coefficients: (About CO)
-D_x = 1;
-D_y = 1;
-D_z = 1;
-D_yaw = 1;
-D_pitch = 1;
-D_roll = 1;
+D_x = 5;
+D_y = 10;
+D_z = 10;
+D_yaw = 5;
+D_pitch = 10;
+D_roll = 10;
 
 % Quadratic damping coefficients: (About CO)
 D2_x = 0;
@@ -90,8 +91,8 @@ J = buildEulerMatrix(n2);
 I = buildInertiaTensor(Ixx, Iyy, Izz, Ixy, Ixz, Iyz);
 M_rb = buildMassMatrix(m, r_G, I);
 C_rb = buildCoriolisMatrix(m, r_G, I, v1, v2);
-D_lin = -diag([D_x, D_y, D_z, D_yaw, D_pitch, D_roll]);
-D_quad = -diag([D2_x, D2_y, D2_z, D2_yaw, D2_pitch, D2_roll]) * abs(v);
+D_lin = diag([D_x, D_y, D_z, D_yaw, D_pitch, D_roll]);
+D_quad = diag([D2_x, D2_y, D2_z, D2_yaw, D2_pitch, D2_roll]) * abs(v);
 [M_added, C_added] = buildAddedMassCoriolisMatrices(v, Ma_x, Ma_y, Ma_z, Ma_yaw, Ma_pitch, Ma_roll);
 G = buildGravityMatrix(m, b, r_G, r_B, n2);
 
