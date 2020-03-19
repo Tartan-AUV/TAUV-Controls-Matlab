@@ -11,7 +11,7 @@ view_width = 10.0;                   % width of the workspace
 view_center = [0, 0, 0];        % center of the view frame
 center_around_robot = true; % If you turn this on, the graph will be centered around the robot.
 
-freq = 10;
+freq = 20;
 dt = 1/freq;
 draw_interval = 2;
 
@@ -33,6 +33,10 @@ n = 0;
 x = zeros(12,1);
 x_ned = zeros(12,1);
 [A, B, G, A_sym, G_sym] = EoM_Linear(@EoM_6DoF, [0,0,0,0,0,pi/4,0,0,0,0,0,0]');
+
+A_fn = matlabFunction(A_sym);
+G_fn = matlabFunction(G_sym);
+
 states = zeros(12,0);
 inputs = zeros(6,0);
 while (true)
@@ -43,10 +47,12 @@ while (true)
     u_ref = toNed(joy2u(joy));
     pos_ref = [-2, .5, 1, 0, 0, pi/2]';
     x_ref = [pos_ref;v_ref];
-    A = double(subs(A_sym, sym('x', [12,1]), x_ref));
-    G = double(subs(G_sym, sym('x', [12,1]), x_ned));
+    x_ref_cell = num2cell(x_ref);
+    A = A_fn(x_ref_cell{4:12});
+    x_ned_cell = num2cell(x_ned);
+    G = G_fn(x_ned_cell{4:5});
     K = lqr(A, B, Q, R);
-    err = x_ned - x_ref
+    err = x_ned - x_ref;
     u_req = -K * err + G;
     u_ned = min(abs(u_req), u_sat) .* sign(u_req);
     %dxdt = A*x_ned + B*u_ned;
