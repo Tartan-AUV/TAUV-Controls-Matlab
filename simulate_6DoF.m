@@ -61,6 +61,7 @@ while (true)
     
     x(1:6) = fromNed(x_ned(1:6));
     x(7:12) = fromNed(x_ned(7:12));
+    u = fromNed(u_ned);
     states(:,n) = x;
     inputs(:,n) = u;
     
