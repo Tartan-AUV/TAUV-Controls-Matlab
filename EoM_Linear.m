@@ -1,4 +1,4 @@
-function [A, B, A_sym] = EoM_Linear(EoM_fn, x_ref)
+function [A, B, G, A_sym, G_sym] = EoM_Linear(EoM_fn, x_ref)
 %EOM_6DOF_LINEARIZE Return A and B matrices for linearized EoM
 %   
 %   For a given nonlinear equations of motion in the form:
@@ -22,13 +22,16 @@ x = sym('x', [12,1]);
 u = sym('u', [6,1]);
 
 % Get symbolic nonlinear EoM
-x_dot = EoM_fn(x,u);
+[x_dot, G_sym] = EoM_fn(x,u);
 
 % Use jacobian to find linear EoM
-A_sym = jacobian(x_dot, x);
-B = jacobian(x_dot, u);
+A_sym = vpa(jacobian(x_dot, x));
+B = double(jacobian(x_dot, u));
 
 % Substitute reference state for A matrix
-A = subs(A_sym, x, x_ref);
+A = double(subs(A_sym, x, x_ref));
+
+% Substitute reference state for G vector
+G = double(subs(G_sym, x, x_ref));
 
 end

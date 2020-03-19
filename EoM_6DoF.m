@@ -1,4 +1,4 @@
-function x_dot = EoM_6DoF(x, u)
+function [x_dot, G] = EoM_6DoF(x, u)
 % Terms:
 % - CO: Center of Orientation. Origin datum for the sub. (origin of
 % base_link)
@@ -38,9 +38,9 @@ function x_dot = EoM_6DoF(x, u)
 %%%%%%%%%%%%%%%%%%
 
 m = 10; % Vehicle Mass in air
-b = 10.2; % Vehicle Buoyancy (Mass of displaced water)
+b = 12; % Vehicle Buoyancy (Mass of displaced water)
 r_G = [0;0;0]; % CoG location relative to CO (NED)
-r_B = [0;0;-0.1]; % CoB location relative to CO (NED)
+r_B = [0;0;-0.]; % CoB location relative to CO (NED)
 
 % Moments of inertia about CoG:
 Ixx = 10;
@@ -131,8 +131,8 @@ function [J, J1, J2] = buildEulerMatrix(n2)
     spsi = sin(psi);
     
     % Prevent singularity condition
-    eps = 0.001;
-    cth = max(abs(cth), eps)*sign(cth);
+    %eps = 0.001;
+    %cth = max(abs(cth), eps)*sign(cth);
     
     % Eq 4.17 (Chin 2013, p 136)
     J1 = [cpsi*cth, -spsi*cphi + cpsi*sth*sphi, spsi*sphi + cpsi*cphi*sth;

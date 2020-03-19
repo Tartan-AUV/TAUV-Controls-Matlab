@@ -2,7 +2,7 @@ frameLength = 0.5;  % length of axes. (I used meters in DH, so 0.1 = 10cm)
 frameWidth = 2;     % width of the frame quivers
 
 trace_position = true;
-trace_time = 10;
+trace_time = 30;
 
 view_azimuth = 45 + 90;          % azimuth for the view angle
 view_rot_speed = 10;
@@ -13,9 +13,17 @@ center_around_robot = true; % If you turn this on, the graph will be centered ar
 
 freq = 10;
 dt = 1/freq;
-draw_interval = 1;
+draw_interval = 2;
 
 joy = vrjoystick(1);
+
+use_linear = false;
+
+% LQR matrices:
+eps = 1e-8;
+Q = diag([1,1,1,10,10,1,1,1,1,1,1,1]'*10);
+R = diag([1,1,1,1,1,1]'*0.01);
+u_sat = [40, 40, 40, 40, 40, 40]';
 
 close all;
 figure;
@@ -24,22 +32,33 @@ set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.25 0.1 0.5 0.8]);
 n = 0;
 x = zeros(12,1);
 x_ned = zeros(12,1);
+[A, B, G, A_sym, G_sym] = EoM_Linear(@EoM_6DoF, [0,0,0,0,0,pi/4,0,0,0,0,0,0]');
 states = zeros(12,0);
 inputs = zeros(6,0);
 while (true)
     n = n+1;
     tic;
     
-    u_ned = toNed(joy2u(joy));
+    v_ref = toNed(joy2v(joy));
+    u_ref = toNed(joy2u(joy));
+    pos_ref = [-2, .5, 1, 0, 0, pi/2]';
+    x_ref = [pos_ref;v_ref];
+    A = double(subs(A_sym, sym('x', [12,1]), x_ref));
+    G = double(subs(G_sym, sym('x', [12,1]), x_ned));
+    K = lqr(A, B, Q, R);
+    err = x_ned - x_ref
+    u_req = -K * err + G;
+    u_ned = min(abs(u_req), u_sat) .* sign(u_req);
+    %dxdt = A*x_ned + B*u_ned;
     dxdt = EoM_6DoF(x_ned, u_ned);
     x_ned = x_ned + dxdt * dt;
     
-    x = x_ned;
     x(1:6) = fromNed(x_ned(1:6));
     x(7:12) = fromNed(x_ned(7:12));
     states(:,n) = x;
     inputs(:,n) = u;
     
+    toc
     if (mod(n,draw_interval) == 0)
         
         % Draw 3d quiver
@@ -75,8 +94,7 @@ while (true)
         zlabel('z')
         
     end
-    
-    pause(max(0, toc - 1/dt));
+    pause(max(0, toc - dt));
 end
 
 function u = joy2u(joy)
@@ -85,8 +103,20 @@ function u = joy2u(joy)
     u(2) = -axis(joy, 1)                     * 10;
     u(3) = (axis(joy,3) - axis(joy,6))/2     * 10;
     u(4) = axis(joy,7)                       * 10;
-    u(5) = -axis(joy,8)                       * 10;
+    u(5) = -axis(joy,8)                      * 10;
     u(6) = -axis(joy, 4)                     * 10;
+    
+    u = u .* double(abs(u) > 0.1);
+end
+
+function u = joy2v(joy)
+    u = zeros(6,1);
+    u(1) = -axis(joy, 2)                     * 1;
+    u(2) = -axis(joy, 1)                     * 1;
+    u(3) = (axis(joy,3) - axis(joy,6))/2     * 1;
+    u(4) = axis(joy,7)                       * 1;
+    u(5) = -axis(joy,8)                      * 1;
+    u(6) = -axis(joy, 4)                     * 1;
     
     u = u .* double(abs(u) > 0.1);
 end
