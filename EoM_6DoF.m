@@ -15,9 +15,9 @@ function [x_dot, G] = EoM_6DoF(x, u)
 % - v = [v1; v2]
 % 
 % - n1 = [x,y,z] position defined in NED (north, east, down)
-% - n2 = [phi, theta, psi] orientation defined  in NED as successively
+% - n2 = [phi, theta, psi] orientation defined  in NED as extrinsic
 % applied euler angles about x, y, z axes respectively. (Roll, Pitch, Yaw)
-% ('xyz' explicit euler angles, or 'ZYX' implicit euler angles: [psi, theta, phi].)
+% ('xyz' extrinsic euler angles, or 'ZYX' intrinsic euler angles: [psi, theta, phi].)
 % - n = [n1; n2]
 % 
 %
