@@ -1,3 +1,5 @@
+% Test of single-shot mpc trajectory tracking
+% (MPC trajectory generated once, then tracked with LQR).
 clear;
 close all
 
@@ -19,8 +21,9 @@ B_fn = matlabFunction(B_sym);
 G_fn = matlabFunction(G_sym);
 x_dot_fn = matlabFunction(x_dot_sym);
 
+% Generate MPC trajectory
 mpc = MpcTrajectoryPlanner(A_sym, double(B_sym), Q, R, Q*10, ...
- [-x_sat, x_sat], [-u_sat, u_sat], 10, dt);
+ [-x_sat, x_sat], [-u_sat, u_sat], 1, dt);
 
 vis = Visualize6DoF(dt);
 
@@ -28,27 +31,34 @@ pos_ref = [-4, -2, -2, 0, 0, -pi]';
 v_ref = zeros(6,1);
 x_target = [pos_ref;v_ref];
 
-[u_traj, x_traj] = mpc.computeTrajectory(x, x_target);
+tic
+toc
 
-for n = 1:mpc.N
+for n = 1:ceil(10/dt)
     tic;
     
+    [u_traj, x_traj] = mpc.computeTrajectory(x, x_target);
+    x_cell = num2cell(x);
+    u = u_traj(:,1) + G_fn(x_cell{4:5});
+    u_cell = num2cell(u);
+
     % Move reference:
-    x_ref = x_traj(:,n);
-    x_ref_cell = num2cell(x_ref);
+    %x_ref = x_traj(:,n);
+    %x_ref_cell = num2cell(x_ref);
     
     % Compute Linear System:
-    x_cell = num2cell(x);
-    A = A_fn(x_ref_cell{4:12});
-    B = B_fn();
-    G = G_fn(x_cell{4:5});
+    %x_cell = num2cell(x);
+    %A = A_fn(x_cell{4:12});
+    %B = B_fn();
+    %G = G_fn(x_cell{4:5});
     
     % Compute Control Input:
-    K = lqr(A, B, Q, R);
-    err = x - x_ref;
-    u_req = -K * err + G;
-    u = min(abs(u_req), u_sat) .* sign(u_req);
-    u_cell = num2cell(u);
+    %K = lqr(A, B, Q, R);
+    %err = x - x_ref;
+    %u_req = -K * err + G;
+    %u = min(abs(u_req), u_sat) .* sign(u_req);
+    %u = u_req;
+    %u_cell = num2cell(u);
     
     % Simulate System:
     x_dot = x_dot_fn(u_cell{:}, x_cell{4:12});
@@ -56,7 +66,7 @@ for n = 1:mpc.N
     
     % Update Visualizer:
     vis.setRobotState(x, n);
-    vis.setReferenceState(x_ref);
+    vis.setReferenceState(x_target);
     vis.showFrame();
     
     pause(max(0, toc - dt));
