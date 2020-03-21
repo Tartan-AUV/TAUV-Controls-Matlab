@@ -38,7 +38,7 @@ while true
     x_cell = num2cell(x);
     
     % Compute Linear System:
-    A = A_fn(x_ref_cell{4:12});
+    A = A_fn(x_cell{4:12});
     B = B_fn();
     G = G_fn(x_cell{4:5});
     

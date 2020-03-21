@@ -72,15 +72,15 @@ classdef Visualize6DoF < handle
             
             title('3d visualizer')
             % Draw reference state:
-            %x = obj.referenceState;
-            %o = x(1:3);
-            %b = eul2rotm(x(6:-1:4)', 'ZYX') * obj.frameLength;
-            %h1 = quiver3(o(1), o(2), o(3), b(1,1), b(2,1), b(3,1), 'color', 'r', 'linewidth', obj.frameWidth);
-            %h2 = quiver3(o(1), o(2), o(3), b(1,2), b(2,2), b(3,2), 'color', 'g', 'linewidth', obj.frameWidth);
-            %h3 = quiver3(o(1), o(2), o(3), b(1,3), b(2,3), b(3,3), 'color', 'b', 'linewidth', obj.frameWidth);
-            %h1.LineStyle = '--';
-            %h2.LineStyle = '--';
-            %h3.LineStyle = '--';
+            x = obj.referenceState;
+            o = x(1:3);
+            b = eul2rotm(x(6:-1:4)', 'ZYX') * obj.frameLength;
+            h1 = quiver3(o(1), o(2), o(3), b(1,1), b(2,1), b(3,1), 'color', 'r', 'linewidth', obj.frameWidth);
+            h2 = quiver3(o(1), o(2), o(3), b(1,2), b(2,2), b(3,2), 'color', 'g', 'linewidth', obj.frameWidth);
+            h3 = quiver3(o(1), o(2), o(3), b(1,3), b(2,3), b(3,3), 'color', 'b', 'linewidth', obj.frameWidth);
+            h1.LineStyle = '--';
+            h2.LineStyle = '--';
+            h3.LineStyle = '--';
             
             % Draw the trace:
             s = max(1, ceil(obj.n - obj.trace_time*obj.freq));
