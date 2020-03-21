@@ -20,7 +20,8 @@ function [x_dot, G] = EoM_6DoF(x, u)
 % ('xyz' extrinsic euler angles, or 'ZYX' intrinsic euler angles: [psi, theta, phi].)
 % - n = [n1; n2]
 % 
-%
+% 
+% 
 % Matrices:
 % 
 % - J(n2): Transformation matrix from body frame velocities v to n' (NED

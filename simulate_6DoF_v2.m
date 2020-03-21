@@ -51,7 +51,7 @@ while true
     
     % Simulate System:
     x_dot = x_dot_fn(u_cell{:}, x_cell{4:12});
-    x = x + x_dot * dt;
+    x = x + x_dot * dt
     
     % Update Visualizer:
     vis.setRobotState(x, n);
