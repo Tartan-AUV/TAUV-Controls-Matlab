@@ -1,14 +1,16 @@
 clear;
 close all;
 
+params = auvParamsAlbatross();
+
 % LQR matrices:
 eps = 1e-8;
-Q = diag([1,1,1,10,10,1,1,1,1,1,1,1]'*10);
-R = diag([1,1,1,1,1,1]'*0.01);
+Q = diag([1,1,1,100,100,10,1,1,1,1,1,1]'*10);
+R = diag([1,1,1,1,1,1]'*0.1);
 u_sat = [40, 40, 40, 40, 40, 40]';
 
 % System dynamics in ENU:
-[A_sym, B_sym, G_sym, x_dot_sym] = EoM_Collect_Enu(@EoM_6DoF);
+[A_sym, B_sym, G_sym, x_dot_sym] = EoM_Collect_Enu(@EoM_6DoF, params);
 A_fn = matlabFunction(A_sym);
 B_fn = matlabFunction(B_sym);
 G_fn = matlabFunction(G_sym);
@@ -21,7 +23,7 @@ vis = Visualize6DoF(dt);
 joy = vrjoystick(1);
 
 n = 0;
-x = zeros(12,1);
+x = [0,0,0,0,0,0,0,0,0,0,0,0]';
 
 while true
     tic;
@@ -47,6 +49,7 @@ while true
     err = x - x_ref;
     u_req = -K * err + G;
     u = min(abs(u_req), u_sat) .* sign(u_req);
+    u = u_ref;
     u_cell = num2cell(u);
     
     % Simulate System:
@@ -55,7 +58,7 @@ while true
     
     % Update Visualizer:
     vis.setRobotState(x, n);
-    vis.setReferenceState(x_ref);
+    vis.setReferenceState(x_ref, n);
     vis.showFrame();
     
     % Wait for dt to make this real-time:

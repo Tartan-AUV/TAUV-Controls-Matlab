@@ -1,4 +1,4 @@
-function [x_dot, G] = EoM_6DoF(x, u)
+function [x_dot, G] = EoM_6DoF(params, x, u)
 % Terms:
 % - CO: Center of Orientation. Origin datum for the sub. (origin of
 % base_link)
@@ -38,42 +38,42 @@ function [x_dot, G] = EoM_6DoF(x, u)
 % Configuration: %
 %%%%%%%%%%%%%%%%%%
 
-m = 10; % Vehicle Mass in air
-b = 12; % Vehicle Buoyancy (Mass of displaced water)
-r_G = [0;0;0]; % CoG location relative to CO (NED)
-r_B = [0;0;-0.]; % CoB location relative to CO (NED)
+m = params.m; % Vehicle Mass in air
+b = params.b; % Vehicle Buoyancy (Mass of displaced water)
+r_G = diag([1,-1,-1])*params.r_G; % CoG location relative to CO (NED)
+r_B = diag([1,-1,-1])*params.r_B; % CoB location relative to CO (NED)
 
 % Moments of inertia about CoG:
-Ixx = 10;
-Iyy = 10;
-Izz = 10;
-Ixy = 0;
-Ixz = 0;
-Iyz = 0;
+Ixx = params.Ixx;
+Iyy = params.Iyy;
+Izz = params.Izz;
+Ixy = params.Ixy;
+Ixz = params.Ixz;
+Iyz = params.Iyz;
 
 % Linear damping coefficients: (About CO)
-D_x = 5;
-D_y = 10;
-D_z = 10;
-D_yaw = 5;
-D_pitch = 10;
-D_roll = 10;
+D_x = params.D_x;
+D_y = params.D_y;
+D_z = params.D_z;
+D_yaw = params.D_yaw;
+D_pitch = params.D_pitch;
+D_roll = params.D_roll;
 
 % Quadratic damping coefficients: (About CO)
-D2_x = 0;
-D2_y = 0;
-D2_z = 0;
-D2_yaw = 0;
-D2_pitch = 0;
-D2_roll = 0;
+D2_x = params.D2_x;
+D2_y = params.D2_y;
+D2_z = params.D2_z;
+D2_yaw = params.D2_yaw;
+D2_pitch = params.D2_pitch;
+D2_roll = params.D2_roll;
 
 % Added mass coefficients: (About CO)
-Ma_x = 0;
-Ma_y = 0;
-Ma_z = 0;
-Ma_yaw = 0;
-Ma_pitch = 0;
-Ma_roll = 0;
+Ma_x = params.Ma_x;
+Ma_y = params.Ma_y;
+Ma_z = params.Ma_z;
+Ma_yaw = params.Ma_yaw;
+Ma_pitch = params.Ma_pitch;
+Ma_roll = params.Ma_roll;
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Equations of Motion: %
@@ -92,9 +92,9 @@ J = buildEulerMatrix(n2);
 I = buildInertiaTensor(Ixx, Iyy, Izz, Ixy, Ixz, Iyz);
 M_rb = buildMassMatrix(m, r_G, I);
 C_rb = buildCoriolisMatrix(m, r_G, I, v1, v2);
-D_lin = diag([D_x, D_y, D_z, D_yaw, D_pitch, D_roll]);
-D_quad = diag([D2_x, D2_y, D2_z, D2_yaw, D2_pitch, D2_roll]) * abs(v);
-[M_added, C_added] = buildAddedMassCoriolisMatrices(v, Ma_x, Ma_y, Ma_z, Ma_yaw, Ma_pitch, Ma_roll);
+D_lin = diag([D_x, D_y, D_z, D_roll, D_pitch, D_yaw]);
+D_quad = diag([D2_x, D2_y, D2_z, D2_roll, D2_pitch, D2_yaw]) * abs(v);
+[M_added, C_added] = buildAddedMassCoriolisMatrices(v, Ma_x, Ma_y, Ma_z, Ma_roll, Ma_pitch, Ma_yaw);
 G = buildGravityMatrix(m, b, r_G, r_B, n2);
 
 % Property 4.1: (Chin 2013, p 139)

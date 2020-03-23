@@ -1,4 +1,4 @@
-function [A_sym, B_sym, G_sym, x_dot_sym] = EoM_Collect_Enu(EoM_fn)
+function [A_sym, B_sym, G_sym, x_dot_sym] = EoM_Collect_Enu(EoM_fn, params)
 %EOM_COLLECT Summary of this function goes here
 %   Detailed explanation goes here
     
@@ -11,7 +11,7 @@ function [A_sym, B_sym, G_sym, x_dot_sym] = EoM_Collect_Enu(EoM_fn)
     u_ned = NedTrans * sym('u', [6,1]);
     
     % Get symbolic nonlinear EoM and symbolic gravity vector:
-    [x_dot_sym_ned, G_sym_ned] = EoM_fn(x_ned, u_ned);
+    [x_dot_sym_ned, G_sym_ned] = EoM_fn(params, x_ned, u_ned);
     
     % Get symbolic linear matrices:
     A_sym_ned = jacobian(x_dot_sym_ned, sym('x', [12,1]));

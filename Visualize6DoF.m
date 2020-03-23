@@ -12,7 +12,7 @@ classdef Visualize6DoF < handle
         view_azimuth_init = 45 + 90;
         view_rot_speed = 10;             % degrees per second
         view_elevation = 30;              % camera elevation
-        view_width = 10.0;                   % width of the workspace
+        view_width = 3.0;                   % width of the workspace
         view_center = [0, 0, 0];        % center of the view frame
         center_around_robot = true; % If you turn this on, the graph will be centered around the robot.
     end
@@ -20,6 +20,7 @@ classdef Visualize6DoF < handle
         dt;
         n;
         referenceState;
+        referenceStates;
         robotState;
         robotStates;
         fig;
@@ -41,10 +42,12 @@ classdef Visualize6DoF < handle
             set(gcf, 'Units', 'Normalized', 'OuterPosition', [0.25 0.1 0.5 0.8]);
         end
         
-        function [] = setReferenceState(obj,x)
+        function [] = setReferenceState(obj,x,n)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
+            obj.n = n;
             obj.referenceState = x;
+            obj.referenceStates(:,obj.n) = x;
         end
         
         function [] = setRobotState(obj,x,n)
@@ -85,10 +88,11 @@ classdef Visualize6DoF < handle
             % Draw the trace:
             s = max(1, ceil(obj.n - obj.trace_time*obj.freq));
             plot3(obj.robotStates(1,s:end), obj.robotStates(2,s:end), obj.robotStates(3,s:end), 'color', 'm');
+            plot3(obj.referenceStates(1,s:end), obj.referenceStates(2,s:end), obj.referenceStates(3,s:end), 'color', 'b');
 
             % Set axes and view:
             if obj.center_around_robot
-                vc = o;
+                vc = obj.robotState(1:3);
             else
                 vc = obj.view_center;
             end
@@ -106,6 +110,19 @@ classdef Visualize6DoF < handle
             zlabel('z')
             
             set(0, 'CurrentFigure', oldfig)
+        end
+        
+        function [] = showPlot(obj)
+            figure;
+            t = obj.dt:obj.dt:obj.n*obj.dt;
+            plot(t,obj.robotStates(1,:));
+            hold on
+            plot(t,obj.robotStates(2,:));
+            plot(t,obj.robotStates(3,:));
+            plot(t,obj.referenceStates(1,:));
+            plot(t,obj.referenceStates(2,:));
+            plot(t,obj.referenceStates(3,:));
+            legend('x_R','y_R','z_R','x_G','y_G','z_G');
         end
     end
 end

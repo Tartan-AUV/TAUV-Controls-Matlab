@@ -58,7 +58,9 @@ classdef MpcTrajectoryPlanner < handle
             C = f_bar' * obj.Q_bar * B_bar - G_bar' * obj.Q_bar * B_bar;
             b = [obj.b_u_bar; obj.b_x_bar - obj.L_x_bar * f_bar];
             L = [obj.L_u_bar; obj.L_x_bar * B_bar];
+            tic
             evalc('U = quadprog(H, C, L, b)');
+            toc
             X = f_bar + B_bar * U;
             
             u_traj = reshape(U,6,obj.N);
